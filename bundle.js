@@ -44,20 +44,16 @@
 /* 0 */
 /***/ function(module, exports, __webpack_require__) {
 
-	'use strict';
-	
 	var React = __webpack_require__(1);
 	var ReactDOM = __webpack_require__(2);
 	var InputNumber = __webpack_require__(3);
 	
 	var App = React.createClass({
-	  displayName: 'App',
-	
-	  getInitialState: function getInitialState() {
+	  getInitialState: function () {
 	    return { number: 73.1 };
 	  },
 	
-	  render: function render() {
+	  render: function () {
 	    return React.createElement(
 	      'div',
 	      null,
@@ -76,12 +72,12 @@
 	    );
 	  },
 	
-	  _onChange: function _onChange(value) {
+	  _onChange: function (value) {
 	    console.log('onChange value', value);
 	    this.setState({ number: value });
 	  },
 	
-	  _onInputChange: function _onInputChange(e) {
+	  _onInputChange: function (e) {
 	    this.setState({ number: e.target.value });
 	  }
 	});
@@ -104,10 +100,11 @@
 /* 3 */
 /***/ function(module, exports, __webpack_require__) {
 
-	'use strict';
+	var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
 	
+	var blacklist = __webpack_require__(4);
 	var React = __webpack_require__(1);
-	var _parse = __webpack_require__(4);
+	var parseNumber = __webpack_require__(5);
 	
 	var KEY_UP = 38;
 	var KEY_DOWN = 40;
@@ -116,54 +113,55 @@
 	module.exports = React.createClass({
 	  displayName: 'InputNumber',
 	
-	  getDefaultProps: function getDefaultProps() {
+	  getDefaultProps() {
 	    return {
 	      step: 1
 	    };
 	  },
 	
-	  parse: function parse(val) {
-	    return _parse(val, this.props.step, this.props.max, this.props.min);
+	  parse(val) {
+	    return parseNumber(val, this.props.step, this.props.max, this.props.min);
 	  },
 	
-	  getInitialState: function getInitialState() {
+	  getInitialState() {
 	    return {
 	      value: this.parse(this.props.value)
 	    };
 	  },
 	
-	  render: function render() {
-	    return React.createElement('input', {
-	      className: this.props.className,
+	  render() {
+	    var props = blacklist(this.props, 'step', 'min', 'max', 'onKeyUp', 'onKeyDown', 'onChange');
+	
+	    return React.createElement('input', _extends({}, props, {
 	      type: 'text',
 	      value: this.state.value,
-	      onKeyUp: this._onKeyUp,
-	      onKeyDown: this._onKeyDown,
-	      onChange: this._onChange
-	    });
+	      onKeyUp: this.handleKeyUp,
+	      onKeyDown: this.handleKeyDown,
+	      onChange: this.handleChange
+	    }));
 	  },
 	
-	  componentWillReceiveProps: function componentWillReceiveProps(nextProps) {
+	  componentWillReceiveProps(nextProps) {
 	    this.setState({
 	      value: this.parse(nextProps.value)
 	    });
 	  },
 	
-	  change: function change(value) {
+	  change(value) {
 	    if (this.props.onChange) {
 	      this.props.onChange(this.parse(value));
 	    }
 	  },
 	
-	  up: function up() {
+	  up() {
 	    this.change(this.state.value + this.props.step);
 	  },
 	
-	  down: function down() {
+	  down() {
 	    this.change(this.state.value - this.props.step);
 	  },
 	
-	  _onKeyDown: function _onKeyDown(e) {
+	  handleKeyDown(e) {
 	    switch (e.keyCode) {
 	      case KEY_UP:
 	        e.preventDefault();
@@ -176,13 +174,13 @@
 	    }
 	  },
 	
-	  _onKeyUp: function _onKeyUp(e) {
+	  handleKeyUp(e) {
 	    if (e.keyCode === KEY_ENTER) {
 	      this.change(this.state.value);
 	    }
 	  },
 	
-	  _onChange: function _onChange(e) {
+	  handleChange(e) {
 	    this.setState({
 	      value: e.target.value
 	    });
@@ -193,8 +191,31 @@
 /* 4 */
 /***/ function(module, exports) {
 
-	'use strict';
+	module.exports = function blacklist(src) {
+	  var copy = {},
+	      filter = arguments[1];
 	
+	  if (typeof filter === 'string') {
+	    filter = {};
+	    for (var i = 1; i < arguments.length; i++) {
+	      filter[arguments[i]] = true;
+	    }
+	  }
+	
+	  for (var key in src) {
+	    // blacklist?
+	    if (filter[key]) continue;
+	
+	    copy[key] = src[key];
+	  }
+	
+	  return copy;
+	};
+
+/***/ },
+/* 5 */
+/***/ function(module, exports) {
+
 	module.exports = function (value, step, max, min) {
 	  if (value === '') return '';
 	  if (value) {
